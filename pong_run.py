@@ -4,8 +4,6 @@ from net import opt_cri_arch
 from model import option_critic
 import torch
 from common.wrappers import make_atari, wrap_deepmind, wrap_pytorch
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 if __name__ == '__main__':
