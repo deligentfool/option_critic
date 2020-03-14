@@ -38,10 +38,8 @@ class option_critic(object):
         self.net = opt_cri_arch(self.observation_dim, self.action_dim, self.option_num, self.conv)
         self.prime_net = opt_cri_arch(self.observation_dim, self.action_dim, self.option_num, self.conv)
         if self.cuda:
-            self.net.cuda()
-            self.net.cuda()
-            torch.FloatTensor = torch.cuda.FloatTensor
-            torch.LongTensor = torch.cuda.LongTensor
+            self.net = self.net.cuda()
+            self.prime_net = self.prime_net.cuda()
         self.prime_net.load_state_dict(self.net.state_dict())
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.buffer = replay_buffer(self.capacity)
@@ -49,6 +47,9 @@ class option_critic(object):
         self.weight_reward = None
 
     def compute_critic_loss(self, ):
+        if self.cuda:
+            torch.FloatTensor = torch.cuda.FloatTensor
+            torch.LongTensor = torch.cuda.LongTensor
         observations, options, rewards, next_observations, dones = self.buffer.sample(self.batch_size)
 
         observations = torch.FloatTensor(observations)
@@ -74,6 +75,9 @@ class option_critic(object):
         return td_error
 
     def compute_actor_loss(self, obs, option, log_prob, entropy, reward, done, next_obs,):
+        if self.cuda:
+            torch.FloatTensor = torch.cuda.FloatTensor
+            torch.LongTensor = torch.cuda.LongTensor
         obs = torch.FloatTensor(np.expand_dims(obs, 0))
         next_obs = torch.FloatTensor(np.expand_dims(next_obs, 0))
 
@@ -97,6 +101,9 @@ class option_critic(object):
         return actor_loss
 
     def run(self):
+        if self.cuda:
+            torch.FloatTensor = torch.cuda.FloatTensor
+            torch.LongTensor = torch.cuda.LongTensor
         for i in range(self.episode):
             obs = self.env.reset()
             if self.render:

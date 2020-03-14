@@ -37,7 +37,7 @@ class opt_cri_arch(nn.Module):
         self.q_value_layer = nn.Linear(128, self.option_num)
 
         self.termination_layer = nn.Linear(128, self.option_num)
-        self.option_layer = [nn.Linear(128, self.action_dim) for _ in range(self.option_num)]
+        self.option_layer = nn.ModuleList([nn.Linear(128, self.action_dim) for _ in range(self.option_num)])
 
     def feature_size(self):
         tmp = torch.zeros(1, * self.observation_dim)
