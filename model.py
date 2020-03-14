@@ -9,7 +9,7 @@ import math
 
 
 class option_critic(object):
-    def __init__(self, env, episode, exploration, update_freq, freeze_interval, batch_size, capacity, learning_rate, option_num, gamma, termination_reg, epsilon_init, decay, epsilon_min, entropy_weight, render):
+    def __init__(self, env, episode, exploration, update_freq, freeze_interval, batch_size, capacity, learning_rate, option_num, gamma, termination_reg, epsilon_init, decay, epsilon_min, entropy_weight, conv, cuda, render):
         self.env = env
         self.episode = episode
         self.exploration = exploration
@@ -25,13 +25,23 @@ class option_critic(object):
         self.decay = decay
         self.epsilon_min = epsilon_min
         self.entropy_weight = entropy_weight
+        self.conv = conv
+        self.cuda = cuda
         self.render = render
 
-        self.observation_dim = self.env.observation_space.shape[0]
+        if not self.conv:
+            self.observation_dim = self.env.observation_space.shape[0]
+        else:
+            self.observation_dim = self.env.observation_space.shape
         self.action_dim = self.env.action_space.n
         self.epsilon = lambda x: self.epsilon_min + (self.epsilon_init - self.epsilon_min) * math.exp(- x / self.decay)
-        self.net = opt_cri_arch(self.observation_dim, self.action_dim, self.option_num)
-        self.prime_net = opt_cri_arch(self.observation_dim, self.action_dim, self.option_num)
+        self.net = opt_cri_arch(self.observation_dim, self.action_dim, self.option_num, self.conv)
+        self.prime_net = opt_cri_arch(self.observation_dim, self.action_dim, self.option_num, self.conv)
+        if self.cuda:
+            self.net.cuda()
+            self.net.cuda()
+            torch.FloatTensor = torch.cuda.FloatTensor
+            torch.LongTensor = torch.cuda.LongTensor
         self.prime_net.load_state_dict(self.net.state_dict())
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate)
         self.buffer = replay_buffer(self.capacity)
@@ -98,7 +108,7 @@ class option_critic(object):
             while True:
                 epsilon = self.epsilon(self.count)
                 if termination:
-                    current_option = random.choice(list(range(self.action_dim))) if epsilon > random.random() else greedy_option
+                    current_option = random.choice(list(range(self.option_num))) if epsilon > random.random() else greedy_option
                 action, log_prob, entropy = self.net.get_action(self.net.get_state(torch.FloatTensor(np.expand_dims(obs, 0))), current_option)
                 next_obs, reward, done, info = self.env.step(action)
                 self.count += 1
