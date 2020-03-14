@@ -9,7 +9,7 @@ import math
 
 
 class option_critic(object):
-    def __init__(self, env, episode, exploration, update_freq, freeze_interval, batch_size, capacity, learning_rate, option_num, gamma, termination_reg, epsilon_init, decay, epsilon_min, entropy_weight, conv, cuda, render):
+    def __init__(self, env, episode, exploration, update_freq, freeze_interval, batch_size, capacity, learning_rate, option_num, gamma, termination_reg, epsilon_init, decay, epsilon_min, entropy_weight, conv, cuda, render, save_path=None):
         self.env = env
         self.episode = episode
         self.exploration = exploration
@@ -28,6 +28,7 @@ class option_critic(object):
         self.conv = conv
         self.cuda = cuda
         self.render = render
+        self.save_path = save_path
 
         if not self.conv:
             self.observation_dim = self.env.observation_space.shape[0]
@@ -150,3 +151,5 @@ class option_critic(object):
 
                     print('episode: {}  reward: {}  weight_reward: {:.2f}'.format(i + 1, total_reward, self.weight_reward))
                     break
+        if self.save_path:
+            torch.save(self.net, self.save_path)
